@@ -1,0 +1,4 @@
+node_modules/
+movie-data/
+.DS_Store
+.env
