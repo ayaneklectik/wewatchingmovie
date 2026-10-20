@@ -1,97 +1,27 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Movie Night</title>
-  <style>
-    :root { color-scheme: dark; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; min-height: 100vh; background: #101114; color: #f4f4f5;
-      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      display: flex; justify-content: center; padding: 28px 16px;
-    }
-    main { width: min(100%, 960px); }
-    h1 { margin: 0 0 6px; font-size: clamp(1.6rem, 4vw, 2.2rem); }
-    p { color: #b8bac2; margin: 0 0 20px; }
-    .controls { display: flex; gap: 8px; margin-bottom: 14px; }
-    input {
-      min-width: 0; flex: 1; padding: 13px 14px; border: 1px solid #3a3c45;
-      border-radius: 9px; background: #1b1d22; color: white; font: inherit;
-    }
-    button {
-      padding: 12px 17px; border: 0; border-radius: 9px; background: #f4f4f5;
-      color: #111; font: inherit; font-weight: 650; cursor: pointer;
-    }
-    .player {
-      width: 100%; aspect-ratio: 16 / 9; background: #050506; border-radius: 12px;
-      overflow: hidden; border: 1px solid #2c2e35;
-    }
-    iframe { width: 100%; height: 100%; border: 0; }
-    .message { min-height: 1.5em; margin-top: 10px; font-size: .92rem; color: #c8cad1; }
-    .help { margin-top: 22px; padding: 15px; background: #191a1f; border-radius: 10px; }
-    .help h2 { font-size: 1rem; margin: 0 0 8px; }
-    .help ol { margin: 0; padding-left: 22px; color: #c8cad1; }
-    .help li + li { margin-top: 5px; }
-    @media (max-width: 560px) {
-      .controls { flex-direction: column; }
-      button { width: 100%; }
-    }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Movie Night</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#101114;color:#f5f5f5;font:16px/1.5 system-ui,-apple-system,sans-serif;min-height:100vh;padding:28px 16px}main{max-width:980px;margin:auto}h1{margin:0 0 4px;font-size:clamp(1.7rem,4vw,2.3rem)}p{color:#b8bac2}.panel{background:#191a1f;border:1px solid #30323a;border-radius:12px;padding:18px;margin:18px 0}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}input[type=password],input[type=file]{max-width:100%;min-width:0;flex:1;padding:12px;background:#111216;color:#fff;border:1px solid #3b3d46;border-radius:8px;font:inherit}button{padding:12px 17px;background:#f4f4f5;color:#111;border:0;border-radius:8px;font:inherit;font-weight:700;cursor:pointer}button:disabled{opacity:.55;cursor:wait}.player{width:100%;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9;display:grid;place-items:center;border:1px solid #30323a}video{width:100%;height:100%;object-fit:contain}.hidden{display:none!important}.status{min-height:1.5em;color:#c6c8d0;font-size:.94rem;overflow-wrap:anywhere}.muted{font-size:.9rem;color:#a7a9b2}.progress{width:100%;margin-top:10px}label{font-weight:650;display:block;margin-bottom:8px}@media(max-width:560px){.row{align-items:stretch;flex-direction:column}.row button{width:100%}}
+</style>
 </head>
-<body>
-  <main>
-    <h1>Movie Night</h1>
-    <p>Paste the Google Drive sharing link to watch the movie here.</p>
-    <form id="movie-form" class="controls">
-      <input id="movie-url" type="url" placeholder="Paste Google Drive movie link…" autocomplete="url" required>
-      <button id="watch-button" type="submit">Watch movie</button>
-    </form>
-    <div class="player">
-      <iframe id="movie-frame" title="Movie player" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="no-referrer" style="display:none"></iframe>
-    </div>
-    <div id="message" class="message" role="status" aria-live="polite"></div>
-    <section class="help">
-      <h2>Set it up</h2>
-      <ol>
-        <li>Upload the 3–4 GB movie to Google Drive and wait for the upload to finish processing.</li>
-        <li>On Drive, open the file’s Share settings and set General access to <strong>Anyone with the link — Viewer</strong>.</li>
-        <li>Copy the file’s sharing link, paste it above, and press <strong>Watch movie</strong>.</li>
-        <li>Send your girlfriend this website’s URL. She pastes the same Drive link to play it.</li>
-      </ol>
-    </section>
-  </main>
-  <script>
-    const form = document.getElementById('movie-form');
-    const input = document.getElementById('movie-url');
-    const frame = document.getElementById('movie-frame');
-    const message = document.getElementById('message');
-    function getDriveFileId(raw) {
-      let url;
-      try { url = new URL(raw); } catch { return null; }
-      if (!['drive.google.com', 'docs.google.com'].includes(url.hostname)) return null;
-      const pathMatch = url.pathname.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-      if (pathMatch) return pathMatch[1];
-      const id = url.searchParams.get('id');
-      return id && /^[a-zA-Z0-9_-]+$/.test(id) ? id : null;
-    }
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const id = getDriveFileId(input.value.trim());
-      if (!id) {
-        message.textContent = 'That does not look like a Google Drive file link. Copy the file’s Share link from Drive and try again.';
-        frame.style.display = 'none';
-        frame.removeAttribute('src');
-        return;
-      }
-      message.textContent = 'Loading the movie… If playback is blocked, check that Drive access is set to “Anyone with the link”.';
-      frame.src = `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview`;
-      frame.style.display = 'block';
-    });
-    frame.addEventListener('load', () => {
-      if (frame.style.display !== 'none') message.textContent = 'If the player asks for access, update the file’s Google Drive sharing settings.';
-    });
-  </script>
-</body>
-</html>
+<body><main>
+<h1>Movie Night</h1><p>Upload your movie once, then press play. The file stays on your computer.</p>
+<section id="login-panel" class="panel"><form id="login-form"><label for="access-code">Access code</label><div class="row"><input id="access-code" type="password" autocomplete="current-password" placeholder="Enter the code shown in Terminal" required><button>Unlock</button></div></form><div id="login-status" class="status" role="status"></div></section>
+<section id="app" class="hidden">
+<div class="panel"><label for="movie-file">Choose movie file (MP4 recommended)</label><div class="row"><input id="movie-file" type="file" accept="video/*,.mkv,.avi" required><button id="upload-button">Upload movie</button></div><progress id="progress" class="progress hidden" max="100" value="0"></progress><div id="upload-status" class="status" role="status"></div><p class="muted">Keep this computer awake and online while watching. Uploading a 3–4 GB file can take a while.</p></div>
+<div class="player"><video id="video" controls playsinline preload="metadata" class="hidden"></video><div id="empty">Your movie will appear here after upload.</div></div>
+<div id="player-status" class="status"></div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let loggedIn=false;
+function showApp(){loggedIn=true;$('login-panel').classList.add('hidden');$('app').classList.remove('hidden');checkMovie()}
+async function checkMovie(){try{const r=await fetch('/status');if(r.status===401)return;if(r.ok){const d=await r.json();if(d.exists){$('video').src='/movie';$('video').classList.remove('hidden');$('empty').classList.add('hidden');$('player-status').textContent='Movie ready. Press play.'}else{$('player-status').textContent='Upload your movie to get started.'}}}catch{}}
+$('login-form').addEventListener('submit',async e=>{e.preventDefault();$('login-status').textContent='Checking…';try{const r=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:$('access-code').value})});if(!r.ok)throw Error('Incorrect access code.');showApp()}catch(err){$('login-status').textContent=err.message}});
+$('upload-button').addEventListener('click',async()=>{const f=$('movie-file').files[0];if(!f){$('upload-status').textContent='Choose the movie file first.';return}if(f.size>5*1024**3){$('upload-status').textContent='This quick setup supports files up to 5 GiB. Your 3–4 GB movie should fit.';return}
+const b=$('upload-button');b.disabled=true;$('progress').classList.remove('hidden');$('progress').value=0;$('upload-status').textContent='Uploading… keep this tab open.';
+try{const xhr=new XMLHttpRequest();await new Promise((resolve,reject)=>{xhr.open('PUT','/upload');xhr.setRequestHeader('Content-Type',f.type||'application/octet-stream');xhr.setRequestHeader('X-Movie-Name',encodeURIComponent(f.name));xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);$('progress').value=p;$('upload-status').textContent='Uploading… '+p+'%'}};xhr.onload=()=>xhr.status>=200&&xhr.status<300?resolve():reject(Error(xhr.responseText||'Upload failed ('+xhr.status+').'));xhr.onerror=()=>reject(Error('Connection lost during upload. Check that the server is still running and retry.'));xhr.onabort=()=>reject(Error('Upload cancelled.'));xhr.send(f)});$('upload-status').textContent='Upload complete.';$('video').src='/movie';$('video').classList.remove('hidden');$('empty').classList.add('hidden');$('player-status').textContent='Movie ready. Press play.';$('video').load()}catch(err){$('upload-status').textContent=err.message}finally{b.disabled=false}});
+</script></body></html>
