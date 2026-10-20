@@ -1,0 +1,12 @@
+{
+  "name": "movie-night-local",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local movie streaming server with range playback and password protection",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
