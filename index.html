@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Movie Night</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: #101114; color: #f4f4f5;
+      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex; justify-content: center; padding: 28px 16px;
+    }
+    main { width: min(100%, 960px); }
+    h1 { margin: 0 0 6px; font-size: clamp(1.6rem, 4vw, 2.2rem); }
+    p { color: #b8bac2; margin: 0 0 20px; }
+    .controls { display: flex; gap: 8px; margin-bottom: 14px; }
+    input {
+      min-width: 0; flex: 1; padding: 13px 14px; border: 1px solid #3a3c45;
+      border-radius: 9px; background: #1b1d22; color: white; font: inherit;
+    }
+    button {
+      padding: 12px 17px; border: 0; border-radius: 9px; background: #f4f4f5;
+      color: #111; font: inherit; font-weight: 650; cursor: pointer;
+    }
+    .player {
+      width: 100%; aspect-ratio: 16 / 9; background: #050506; border-radius: 12px;
+      overflow: hidden; border: 1px solid #2c2e35;
+    }
+    iframe { width: 100%; height: 100%; border: 0; }
+    .message { min-height: 1.5em; margin-top: 10px; font-size: .92rem; color: #c8cad1; }
+    .help { margin-top: 22px; padding: 15px; background: #191a1f; border-radius: 10px; }
+    .help h2 { font-size: 1rem; margin: 0 0 8px; }
+    .help ol { margin: 0; padding-left: 22px; color: #c8cad1; }
+    .help li + li { margin-top: 5px; }
+    @media (max-width: 560px) {
+      .controls { flex-direction: column; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Movie Night</h1>
+    <p>Paste the Google Drive sharing link to watch the movie here.</p>
+    <form id="movie-form" class="controls">
+      <input id="movie-url" type="url" placeholder="Paste Google Drive movie link…" autocomplete="url" required>
+      <button id="watch-button" type="submit">Watch movie</button>
+    </form>
+    <div class="player">
+      <iframe id="movie-frame" title="Movie player" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="no-referrer" style="display:none"></iframe>
+    </div>
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+    <section class="help">
+      <h2>Set it up</h2>
+      <ol>
+        <li>Upload the 3–4 GB movie to Google Drive and wait for the upload to finish processing.</li>
+        <li>On Drive, open the file’s Share settings and set General access to <strong>Anyone with the link — Viewer</strong>.</li>
+        <li>Copy the file’s sharing link, paste it above, and press <strong>Watch movie</strong>.</li>
+        <li>Send your girlfriend this website’s URL. She pastes the same Drive link to play it.</li>
+      </ol>
+    </section>
+  </main>
+  <script>
+    const form = document.getElementById('movie-form');
+    const input = document.getElementById('movie-url');
+    const frame = document.getElementById('movie-frame');
+    const message = document.getElementById('message');
+    function getDriveFileId(raw) {
+      let url;
+      try { url = new URL(raw); } catch { return null; }
+      if (!['drive.google.com', 'docs.google.com'].includes(url.hostname)) return null;
+      const pathMatch = url.pathname.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (pathMatch) return pathMatch[1];
+      const id = url.searchParams.get('id');
+      return id && /^[a-zA-Z0-9_-]+$/.test(id) ? id : null;
+    }
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const id = getDriveFileId(input.value.trim());
+      if (!id) {
+        message.textContent = 'That does not look like a Google Drive file link. Copy the file’s Share link from Drive and try again.';
+        frame.style.display = 'none';
+        frame.removeAttribute('src');
+        return;
+      }
+      message.textContent = 'Loading the movie… If playback is blocked, check that Drive access is set to “Anyone with the link”.';
+      frame.src = `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview`;
+      frame.style.display = 'block';
+    });
+    frame.addEventListener('load', () => {
+      if (frame.style.display !== 'none') message.textContent = 'If the player asks for access, update the file’s Google Drive sharing settings.';
+    });
+  </script>
+</body>
+</html>
